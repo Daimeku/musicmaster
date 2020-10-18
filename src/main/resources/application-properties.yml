@@ -1,4 +1,8 @@
 spotify:
   client:
-    id: clientIdValue
-    secret: clientSecretValue
+    id: testId
+    secret: testSecretValue
+  uri: https://accounts.spotify.com/authorize?response_type=code&client_id={client_id}&scope={scope}&redirect_uri={redirect_uri}&state={state}
+  redirect:
+    uri: http://localhost:8080/spotifyCallback
+  scope: user-read-private user-read-email
