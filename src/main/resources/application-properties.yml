@@ -1,0 +1,4 @@
+spotify:
+  client:
+    id: clientIdValue
+    secret: clientSecretValue
