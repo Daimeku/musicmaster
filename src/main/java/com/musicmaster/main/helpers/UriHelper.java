@@ -11,10 +11,10 @@ import java.util.Map;
 @Component
 public class UriHelper {
 
-    @Value("${spotify.uri}")
+    @Value("${spotify.uri.authorize}")
     private String SPOTIFY_BASEPATH;
 
-    @Value("${spotify.client.id")
+    @Value("${spotify.client.id}")
     private String SPOTIFY_CLIENT_ID;
 
     @Value("${spotify.scope}")
@@ -33,16 +33,6 @@ public class UriHelper {
         queryParams.put("state", state);
         UriComponents uriComponents = UriComponentsBuilder.fromUriString(SPOTIFY_BASEPATH).buildAndExpand(queryParams);
         return  uriComponents.toUri().toString();
-//        UriComponents uriComponents = UriComponentsBuilder.newInstance()
-//                .scheme("https").host("accounts.spotify.com").path("/authorize")
-//                .query("response_type")
-//                .query("client_id")
-//                .query("scope")
-//                .query("redirect_uri")
-//                .query("state")
-//                .buildAndExpand()
-
-//        return uri;
     }
 
 }
