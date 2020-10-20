@@ -34,7 +34,7 @@ public class AuthService {
     public String updateSpotifyAuthDetails(String authCode) {
         SpotifyTokenResponse spotifyResponse = spotifyMusicSource.getToken(authCode);
         //update the config details
-        UserConfig config = userConfigRepository.findById(1).orElse(new UserConfig(authCode));
+        UserConfig config = userConfigRepository.getOne(1);
         config.setSpotifyToken(spotifyResponse.getAccessToken());
         config.setSpotifyRefreshToken(spotifyResponse.getRefreshToken());
         config.setSpotifyTokenExpiration( LocalDateTime.now().plusSeconds(spotifyResponse.getExpiresIn()) );

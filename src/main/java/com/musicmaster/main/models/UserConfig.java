@@ -13,6 +13,7 @@ public class UserConfig {
     @GeneratedValue
     private int id;
 
+    @Column(length = 500)
     private String spotifyAuthCode;
 
     private String spotifyToken;

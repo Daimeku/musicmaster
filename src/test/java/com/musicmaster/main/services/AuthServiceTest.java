@@ -35,6 +35,7 @@ public class AuthServiceTest {
         when(spotifyMusicSource.getToken(anyString())).thenReturn(mockSpotifyResponse);
         when(spotifyMusicSource.getProfileDetails()).thenReturn(mockProfileDetails);
         when(userConfigRepository.save(any())).thenReturn(new UserConfig());
+        when(userConfigRepository.getOne(anyInt())).thenReturn(new UserConfig());
     }
 
     @Test

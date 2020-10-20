@@ -1,20 +1,18 @@
 package com.musicmaster.main.clients;
 
 import com.musicmaster.main.exceptions.SpotifyApiException;
+import com.musicmaster.main.models.Song;
 import com.musicmaster.main.models.SpotifyPlaylist;
+import com.musicmaster.main.models.SpotifySong;
 import com.musicmaster.main.models.UserConfig;
-import com.musicmaster.main.pojo.SpotifyProfileDetails;
-import com.musicmaster.main.pojo.SpotifyTokenResponse;
+import com.musicmaster.main.pojo.*;
 import com.musicmaster.main.repositories.UserConfigRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.web.client.RestTemplateBuilder;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpRequest;
-import org.springframework.http.MediaType;
+import org.springframework.http.*;
 import org.springframework.http.client.ClientHttpRequestExecution;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.ClientHttpResponse;
@@ -26,6 +24,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -80,7 +79,7 @@ public class SpotifyMusicSource {
             throw new SpotifyApiException(ex);
         }
         logger.info("spotify token request successful");
-        this.updateRequestToken(response.getAccessToken());
+        this.updateRequestToken(response.getAccessToken(), response.getExpiresIn());
 
         return response;
     }
@@ -106,15 +105,14 @@ public class SpotifyMusicSource {
         }
         logger.info("successfully refreshed token");
 
-        this.updateRequestToken(response.getAccessToken());
+        this.updateRequestToken(response.getAccessToken(), response.getExpiresIn());
 
         return response;
     }
 
     public SpotifyProfileDetails getProfileDetails() {
         SpotifyProfileDetails profileDetails;
-        //to get profile details I need to ensure the token is valid
-        //check token expiration time, if expired request a new one
+
         if(tokenExpired())
             getRefreshToken();
 
@@ -127,21 +125,63 @@ public class SpotifyMusicSource {
         return profileDetails;
     }
 
+    //make request to get playlists from spotify
     public List<SpotifyPlaylist> getPlaylists() {
-
-        return null;
-    }
-    private boolean tokenExpired() {
+        //make a request to get the list of playlists
         UserConfig config = userConfigRepository.getOne(1);
 
-        if(config.getSpotifyTokenExpiration().isBefore(LocalDateTime.now()))
+        ResponseEntity<SpotifyPlaylistResponse> response = restTemplate.getForEntity(API_BASEPATH + "/users/" + config.getSpotifyUserId() + "/playlists",
+                SpotifyPlaylistResponse.class, "" );
+
+        List<SpotifyPlaylist> playlists = response.getBody().getItems();
+
+        return playlists;
+    }
+
+    public List<SpotifySong> getPlaylistTracks(String id) {
+        //build the url
+        String playlistUri = API_BASEPATH + "/playlists/" + id + "/tracks";
+
+        //send the request to get playlists
+        SpotifyPlaylistTracksResponse playlistReponse = restTemplate.getForObject(playlistUri, SpotifyPlaylistTracksResponse.class);
+
+        List<SpotifyPlaylistItem> playlistItems = playlistReponse.getItems();
+
+        List<SpotifySong> songs = new ArrayList<>();
+        playlistItems.stream().forEach(item->songs.add(item.getTrack()));
+
+        return songs;
+
+    }
+
+    public SpotifyPlaylist createPlaylist() {
+        UserConfig config = userConfigRepository.getOne(1);
+        String playlistEndpoint = API_BASEPATH + "/users/" + config.getSpotifyUserId() + "/playlists";
+
+        SpotifyPlaylistRequest playlist = new SpotifyPlaylistRequest("testing from api");
+        HttpHeaders headers = new HttpHeaders(  );
+        headers.add("Content-Type", MediaType.APPLICATION_JSON_VALUE);
+        HttpEntity<SpotifyPlaylist> request = new HttpEntity(playlist, headers);
+
+        playlist = restTemplate.postForObject(playlistEndpoint, request, SpotifyPlaylistRequest.class);
+        return new SpotifyPlaylist(playlist);
+    }
+
+    private boolean tokenExpired() {
+        UserConfig config = userConfigRepository.getOne(1);
+        //offset expiration by a few seconds
+        if(config.getSpotifyTokenExpiration().isBefore(LocalDateTime.now().minusSeconds(20)))
             return true;
 
         return false;
     }
 
-    private void updateRequestToken(String token) {
-//        UserConfig config = userConfigRepository.getOne(1);
+    private void updateRequestToken(String token, int expiration) {
+
+        UserConfig config = userConfigRepository.findById(1).orElse(new UserConfig());;
+        config.setSpotifyToken(token);
+        config.setSpotifyTokenExpiration(LocalDateTime.now().plusSeconds(expiration));
+        userConfigRepository.save(config);
 
         restTemplate.getInterceptors().add(new ClientHttpRequestInterceptor() {
             @Override

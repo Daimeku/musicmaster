@@ -9,6 +9,8 @@ public interface Playlist {
     List<Song> getSongs();
     void setSongs(List<Song> songs);
     String getSource();
-    void setSource();
-    int size();
+    String getDescription();
+    void setDescription(String description);
+//    void setSource();
+//    int size();
 }
