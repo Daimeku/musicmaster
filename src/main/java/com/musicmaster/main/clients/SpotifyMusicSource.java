@@ -1,10 +1,7 @@
 package com.musicmaster.main.clients;
 
 import com.musicmaster.main.exceptions.SpotifyApiException;
-import com.musicmaster.main.models.Song;
-import com.musicmaster.main.models.SpotifyPlaylist;
-import com.musicmaster.main.models.SpotifySong;
-import com.musicmaster.main.models.UserConfig;
+import com.musicmaster.main.models.*;
 import com.musicmaster.main.pojo.*;
 import com.musicmaster.main.repositories.UserConfigRepository;
 import org.slf4j.Logger;
@@ -25,7 +22,11 @@ import org.springframework.web.client.RestTemplate;
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+
+import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
 
 @Service
 public class SpotifyMusicSource {
@@ -111,67 +112,132 @@ public class SpotifyMusicSource {
     }
 
     public SpotifyProfileDetails getProfileDetails() {
+        preRequestSetup();
         SpotifyProfileDetails profileDetails;
-
-        if(tokenExpired())
-            getRefreshToken();
 
         try {
             profileDetails = restTemplate.getForObject(API_BASEPATH + "/me", SpotifyProfileDetails.class);
         } catch(HttpClientErrorException ex) {
-            logger.error("failed to get spotify profile: ", ex);
-            throw new SpotifyApiException("error getting user profiles");
+            throw new SpotifyApiException("error getting user profiles", ex);
         }
         return profileDetails;
     }
 
     //make request to get playlists from spotify
-    public List<SpotifyPlaylist> getPlaylists() {
+    public List<Playlist> getPlaylists() {
+
+        preRequestSetup();
+
         //make a request to get the list of playlists
         UserConfig config = userConfigRepository.getOne(1);
+        ResponseEntity<SpotifyPlaylistResponse> response;
 
-        ResponseEntity<SpotifyPlaylistResponse> response = restTemplate.getForEntity(API_BASEPATH + "/users/" + config.getSpotifyUserId() + "/playlists",
-                SpotifyPlaylistResponse.class, "" );
+        try {
+             response = restTemplate.getForEntity(API_BASEPATH + "/users/" + config.getSpotifyUserId() + "/playlists",
+                    SpotifyPlaylistResponse.class);
+        } catch (Exception ex) {
+            throw new SpotifyApiException("failed to get playlists", ex);
+        }
 
-        List<SpotifyPlaylist> playlists = response.getBody().getItems();
+
+        List<Playlist> playlists = new ArrayList<>();
+        response.getBody().getItems()
+                .forEach((item) -> playlists.add(item) );
 
         return playlists;
     }
 
-    public List<SpotifySong> getPlaylistTracks(String id) {
-        //build the url
-        String playlistUri = API_BASEPATH + "/playlists/" + id + "/tracks";
+    public List<Song> getPlaylistTracks(String id) {
 
+        preRequestSetup();
+
+        String playlistUri = API_BASEPATH + "/playlists/" + id + "/tracks";
         //send the request to get playlists
-        SpotifyPlaylistTracksResponse playlistReponse = restTemplate.getForObject(playlistUri, SpotifyPlaylistTracksResponse.class);
+        SpotifyPlaylistTracksResponse playlistReponse;
+        try {
+             playlistReponse = restTemplate.getForObject(playlistUri, SpotifyPlaylistTracksResponse.class);
+        } catch (HttpClientErrorException ex) {
+            throw new SpotifyApiException("error getting playlist tracks", ex);
+        }
 
         List<SpotifyPlaylistItem> playlistItems = playlistReponse.getItems();
 
-        List<SpotifySong> songs = new ArrayList<>();
+        List<Song> songs = new ArrayList<>();
         playlistItems.stream().forEach(item->songs.add(item.getTrack()));
 
         return songs;
 
     }
 
-    public SpotifyPlaylist createPlaylist() {
+    public SpotifyPlaylist createPlaylist(SpotifyPlaylist sourcePlaylist) {
+        preRequestSetup();
+
         UserConfig config = userConfigRepository.getOne(1);
         String playlistEndpoint = API_BASEPATH + "/users/" + config.getSpotifyUserId() + "/playlists";
 
-        SpotifyPlaylistRequest playlist = new SpotifyPlaylistRequest("testing from api");
+        SpotifyPlaylistRequest playlist = new SpotifyPlaylistRequest(sourcePlaylist);
         HttpHeaders headers = new HttpHeaders(  );
-        headers.add("Content-Type", MediaType.APPLICATION_JSON_VALUE);
+        headers.add("Content-Type", APPLICATION_JSON_VALUE);
         HttpEntity<SpotifyPlaylist> request = new HttpEntity(playlist, headers);
 
-        playlist = restTemplate.postForObject(playlistEndpoint, request, SpotifyPlaylistRequest.class);
-        return new SpotifyPlaylist(playlist);
+        Map<String, Object> playlistResponse = restTemplate.postForObject(playlistEndpoint, request, Map.class);
+        SpotifyPlaylist spotifyPlaylist = new SpotifyPlaylist();
+        spotifyPlaylist.setId(playlistResponse.get("id").toString());
+        spotifyPlaylist.setName(playlistResponse.get("name").toString());
+        if(playlistResponse.get("description") != null)
+            spotifyPlaylist.setDescription(playlistResponse.get("description").toString());
+        return spotifyPlaylist;
+    }
+
+    public boolean addTracksToPlaylist(String playlistId, List<SpotifySong> tracks) {
+        boolean tracksAdded = false;
+        String requestUri = API_BASEPATH + "/playlists/" + playlistId + "/tracks";
+        HttpHeaders headers = new HttpHeaders();
+        headers.add("Content-Type", APPLICATION_JSON_VALUE);
+        List<String> trackUris = formatTrackUri(tracks);
+        Map<String, Object> requestMap = new HashMap<>();
+        requestMap.put("uris", trackUris);
+        HttpEntity<Map<String, Object>> request = new HttpEntity<>(requestMap, headers);
+        Map<String, String> response;
+        try {
+            response = restTemplate.postForObject(requestUri, request, Map.class);
+        } catch( HttpClientErrorException ex) {
+            throw new SpotifyApiException("error while adding tracks to playlist ", ex);
+        }
+
+        if(response.get("snapshot_id") != null)
+            tracksAdded = true;
+
+        return tracksAdded;
+    }
+
+    public SpotifyPlaylist createPlaylistAndAddTracks(SpotifyPlaylist sourcePlaylist) {
+        SpotifyPlaylist playlist = createPlaylist( sourcePlaylist);
+        boolean tracksAdded = addTracksToPlaylist(playlist.getId(), sourcePlaylist.getSpotifySongs());
+        return playlist;
+    }
+
+
+    private List<String> formatTrackUri(List<SpotifySong> tracks) {
+        List<String> trackUris = new ArrayList<>(tracks.size());
+        tracks.forEach(track -> trackUris.add("spotify:track:" + track.getId()));
+        return trackUris;
+    }
+
+    private void preRequestSetup(){
+        if(tokenExpired())
+            getRefreshToken();
     }
 
     private boolean tokenExpired() {
         UserConfig config = userConfigRepository.getOne(1);
+
+        if(restTemplate.getInterceptors().size() < 1)
+            return true;
         //offset expiration by a few seconds
         if(config.getSpotifyTokenExpiration().isBefore(LocalDateTime.now().minusSeconds(20)))
             return true;
+
 
         return false;
     }

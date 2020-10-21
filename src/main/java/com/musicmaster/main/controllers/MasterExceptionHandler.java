@@ -18,7 +18,7 @@ public class MasterExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler(SpotifyApiException.class)
     @ResponseBody
     public ResponseEntity<String> handleSpotifyApiException(SpotifyApiException ex) {
-        logger.error(ex.getMessage(), ex);
+        logger.error(ex.getMessage(), ex.getCause());
         return new ResponseEntity<String>( ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 }

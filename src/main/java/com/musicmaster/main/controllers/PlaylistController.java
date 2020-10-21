@@ -6,8 +6,11 @@ import com.musicmaster.main.models.Song;
 import com.musicmaster.main.models.SpotifyPlaylist;
 import com.musicmaster.main.models.SpotifySong;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -21,17 +24,24 @@ public class PlaylistController {
     SpotifyMusicSource spotifyMusicSource;
 
     @GetMapping(path = "", produces = APPLICATION_JSON_VALUE)
-    public List<SpotifyPlaylist> getPlaylists() {
+    public List<Playlist> getPlaylists() {
         return spotifyMusicSource.getPlaylists();
     }
 
     @GetMapping(path = "/{id}", produces = APPLICATION_JSON_VALUE)
-    public List<SpotifySong> getPlaylist(@PathVariable String id) {
+    public List<Song> getPlaylist(@PathVariable String id) {
         return spotifyMusicSource.getPlaylistTracks(id);
     }
 
     @PostMapping(path = "", produces = APPLICATION_JSON_VALUE)
-    public Object createPlaylist() {
-        return spotifyMusicSource.createPlaylist();
+    public String createPlaylist() {
+        SpotifySong song = new SpotifySong("1q8kj0fpTfdGYgjuJd2UTM");
+        song.setName("Bluffin");
+        List<SpotifySong> songs = new ArrayList<>();
+        songs.add(song);
+        SpotifyPlaylist playlist = new SpotifyPlaylist("brand-new-playlist");
+        playlist.setSpotifySongs(songs);
+        playlist = spotifyMusicSource.createPlaylistAndAddTracks(playlist);
+        return playlist.getId();
     }
 }

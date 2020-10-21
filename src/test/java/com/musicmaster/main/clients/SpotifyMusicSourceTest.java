@@ -1,26 +1,26 @@
 package com.musicmaster.main.clients;
 
 import com.musicmaster.main.exceptions.SpotifyApiException;
-import com.musicmaster.main.models.SpotifyPlaylist;
-import com.musicmaster.main.models.UserConfig;
-import com.musicmaster.main.pojo.SpotifyProfileDetails;
-import com.musicmaster.main.pojo.SpotifyTokenResponse;
+import com.musicmaster.main.models.*;
+import com.musicmaster.main.pojo.*;
 import com.musicmaster.main.repositories.UserConfigRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
-import org.springframework.boot.test.autoconfigure.web.client.RestClientTest;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
@@ -45,10 +45,18 @@ public class SpotifyMusicSourceTest {
     public void init() {
         UserConfig userConfig = new UserConfig("tetet");
         userConfig.setSpotifyTokenExpiration(LocalDateTime.now().minusMinutes(4));
+        SpotifyPlaylistResponse playlistResponse = new SpotifyPlaylistResponse();
+        List<SpotifyPlaylist> playlists = new ArrayList<SpotifyPlaylist>();
+        playlists.add(new SpotifyPlaylist("edasfa"));
+        playlistResponse.setItems(playlists);
+        SpotifyPlaylistTracksResponse tracksResponse = setupTracksResponse();
+
         when(restTemplateBuilder.basicAuthentication(anyString(), anyString())).thenReturn(restTemplateBuilder);
         when(restTemplateBuilder.build()).thenReturn(restTemplate);
         when(restTemplate.postForObject(anyString(),any(), eq(SpotifyTokenResponse.class) )).thenReturn(new SpotifyTokenResponse());
         when(restTemplate.getForObject(anyString(), eq(SpotifyProfileDetails.class))).thenReturn(new SpotifyProfileDetails("e"));
+        when(restTemplate.getForEntity(anyString(), eq(SpotifyPlaylistResponse.class))).thenReturn(new ResponseEntity<SpotifyPlaylistResponse>( playlistResponse, HttpStatus.OK));
+        when(restTemplate.getForObject(anyString(), eq(SpotifyPlaylistTracksResponse.class))).thenReturn(tracksResponse);
         when(userConfigRepository.getOne(anyInt())).thenReturn(userConfig);
 
         spotifyMusicSource = new SpotifyMusicSource(restTemplateBuilder, "", "", userConfigRepository);
@@ -59,6 +67,15 @@ public class SpotifyMusicSourceTest {
 
     }
 
+    private SpotifyPlaylistTracksResponse setupTracksResponse() {
+        SpotifyPlaylistItem playlistItem = new SpotifyPlaylistItem();
+        playlistItem.setTrack(new SpotifySong("test"));
+        List<SpotifyPlaylistItem> playlistItems = new ArrayList<>();
+        playlistItems.add(playlistItem);
+        SpotifyPlaylistTracksResponse playlistTracksResponse = new SpotifyPlaylistTracksResponse();
+        playlistTracksResponse.setItems(playlistItems);
+        return playlistTracksResponse;
+    }
     @Test
     public void getToken_success() {
         SpotifyTokenResponse response = spotifyMusicSource.getToken("test");
@@ -100,7 +117,37 @@ public class SpotifyMusicSourceTest {
 
     @Test
     public void getPlaylists_success() {
-        List<SpotifyPlaylist> playlists = spotifyMusicSource.getPlaylists();
+        List<Playlist> playlists = spotifyMusicSource.getPlaylists();
         assertNotEquals(0, playlists.size());
+    }
+
+    @Test
+    public void getPlaylistTracks_success() {
+        List<Song> tracks = spotifyMusicSource.getPlaylistTracks("test");
+        assertNotEquals(0, tracks.size());
+    }
+
+    @Test
+    public void createPlaylist_success() {
+
+        when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(Map.class)))
+                .thenReturn(Map.of("id", "aasdasda", "name", "test"));
+
+        SpotifyPlaylist playlist = spotifyMusicSource.createPlaylist(new SpotifyPlaylist("testing"));
+        assertEquals("test", playlist.getName());
+    }
+
+    @Test
+    public void addTracksToPlaylist_success() {
+        when(restTemplate.postForObject(anyString(), any(HttpEntity.class), eq(Map.class))).thenReturn(Map.of("snapshot_id", "something"));
+        List<SpotifySong> tracks = new ArrayList<>();
+        tracks.add(new SpotifySong("testing"));
+        boolean tracksAdded = spotifyMusicSource.addTracksToPlaylist("sdasdsa", tracks);
+        assertTrue(tracksAdded);
+    }
+
+    @Test
+    public void searchSong(Song song) {
+
     }
 }

@@ -1,5 +1,6 @@
 package com.musicmaster.main.pojo;
 
+import com.musicmaster.main.models.Playlist;
 import com.musicmaster.main.models.SpotifyPlaylist;
 
 import java.util.List;

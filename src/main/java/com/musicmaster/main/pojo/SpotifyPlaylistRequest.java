@@ -1,6 +1,8 @@
 package com.musicmaster.main.pojo;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.musicmaster.main.models.Playlist;
+import com.musicmaster.main.models.SpotifyPlaylist;
 
 public class SpotifyPlaylistRequest {
 
@@ -12,12 +14,18 @@ public class SpotifyPlaylistRequest {
 
     public SpotifyPlaylistRequest() {}
 
+    public SpotifyPlaylistRequest(Playlist playlist) {
+        this.name = playlist.getName();
+        this.description = playlist.getDescription();
+    }
+
     public SpotifyPlaylistRequest(String name) {
         this.name = name;
         this.description = description;
         this.isPublic = isPublic;
         this.collaborative = collaborative;
     }
+
 
     public String getName() {
         return name;
