@@ -1,10 +1,12 @@
 package com.musicmaster.main.models;
 
+import java.util.List;
+
 public class Song {
 
-    private String name;
-    private Artist artist;
+    protected String name;
     private Album album;
+    private Artist artist;
 
     public String getName() {
         return name;
@@ -14,19 +16,19 @@ public class Song {
         this.name = name;
     }
 
-    public Artist getArtist() {
-        return artist;
-    }
-
-    public void setArtist(Artist artist) {
-        this.artist = artist;
-    }
-
     public Album getAlbum() {
         return album;
     }
 
     public void setAlbum(Album album) {
         this.album = album;
+    }
+
+    public Artist getArtist() {
+        return artist;
+    }
+
+    public void setArtist(Artist artist) {
+        this.artist = artist;
     }
 }

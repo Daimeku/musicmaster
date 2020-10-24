@@ -1,10 +1,9 @@
 package com.musicmaster.main.controllers;
 
 import com.musicmaster.main.clients.SpotifyMusicSource;
-import com.musicmaster.main.models.Playlist;
-import com.musicmaster.main.models.Song;
-import com.musicmaster.main.models.SpotifyPlaylist;
-import com.musicmaster.main.models.SpotifySong;
+import com.musicmaster.main.clients.TidalMusicSource;
+import com.musicmaster.main.models.*;
+import com.musicmaster.main.pojo.SpotifySearchResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -22,6 +21,9 @@ public class PlaylistController {
 
     @Autowired
     SpotifyMusicSource spotifyMusicSource;
+
+    @Autowired
+    TidalMusicSource tidalMusicSource;
 
     @GetMapping(path = "", produces = APPLICATION_JSON_VALUE)
     public List<Playlist> getPlaylists() {
@@ -43,5 +45,17 @@ public class PlaylistController {
         playlist.setSpotifySongs(songs);
         playlist = spotifyMusicSource.createPlaylistAndAddTracks(playlist);
         return playlist.getId();
+    }
+
+    @GetMapping(path = "/search")
+    public SpotifySearchResponse search() {
+        SpotifySong song = new SpotifySong("");
+        song.setName("picking up bags");
+        return spotifyMusicSource.searchSong(song);
+    }
+
+    @GetMapping(path = "/tidal")
+    public List<TidalSong> getTidalSongs(@RequestParam String playlistId) {
+        return tidalMusicSource.getPlaylistTracks(playlistId);
     }
 }

@@ -18,6 +18,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -190,6 +191,8 @@ public class SpotifyMusicSource {
     }
 
     public boolean addTracksToPlaylist(String playlistId, List<SpotifySong> tracks) {
+        preRequestSetup();
+
         boolean tracksAdded = false;
         String requestUri = API_BASEPATH + "/playlists/" + playlistId + "/tracks";
         HttpHeaders headers = new HttpHeaders();
@@ -217,6 +220,28 @@ public class SpotifyMusicSource {
         return playlist;
     }
 
+    public SpotifySearchResponse searchSong(SpotifySong song) {
+        preRequestSetup();
+
+        String searchString = song.getName();
+
+        UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(API_BASEPATH + "/search")
+                .queryParam("q", searchString)
+                .queryParam("type", "track");
+        String url = builder.build(false).toUriString();
+        logger.info("searching url: ",url);
+        SpotifySearchResponse response;
+        try {
+            response = restTemplate.getForObject(url, SpotifySearchResponse.class);
+        } catch(HttpClientErrorException ex) {
+            throw new SpotifyApiException("Error searching for song", ex);
+        }
+
+        if(response == null)
+            throw new SpotifyApiException("null response received from search");
+
+        return response;
+    }
 
     private List<String> formatTrackUri(List<SpotifySong> tracks) {
         List<String> trackUris = new ArrayList<>(tracks.size());

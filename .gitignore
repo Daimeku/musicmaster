@@ -34,3 +34,4 @@ build/
 
 ## local-properties
 /src/main/resources/application.yml
+musicmaster-db.*

@@ -1,6 +1,7 @@
 package com.musicmaster.main.controllers;
 
 import com.musicmaster.main.exceptions.SpotifyApiException;
+import com.musicmaster.main.exceptions.TidalApiException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -20,5 +21,12 @@ public class MasterExceptionHandler extends ResponseEntityExceptionHandler {
     public ResponseEntity<String> handleSpotifyApiException(SpotifyApiException ex) {
         logger.error(ex.getMessage(), ex.getCause());
         return new ResponseEntity<String>( ex.getMessage(), HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(TidalApiException.class)
+    @ResponseBody
+    public ResponseEntity<String> handleTidalApiException(TidalApiException ex) {
+        logger.error(ex.getMessage(), ex.getCause());
+        return new ResponseEntity<String>(ex.getMessage(), HttpStatus.BAD_REQUEST);
     }
 }

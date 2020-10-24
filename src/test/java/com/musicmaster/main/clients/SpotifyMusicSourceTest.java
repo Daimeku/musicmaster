@@ -60,7 +60,7 @@ public class SpotifyMusicSourceTest {
         when(userConfigRepository.getOne(anyInt())).thenReturn(userConfig);
 
         spotifyMusicSource = new SpotifyMusicSource(restTemplateBuilder, "", "", userConfigRepository);
-        ReflectionTestUtils.setField(spotifyMusicSource, "API_BASEPATH", "test");
+        ReflectionTestUtils.setField(spotifyMusicSource, "API_BASEPATH", "http://test");
         ReflectionTestUtils.setField(spotifyMusicSource, "CLIENT_ID", "test");
         ReflectionTestUtils.setField(spotifyMusicSource, "CLIENT_SECRET", "test");
         ReflectionTestUtils.setField(spotifyMusicSource, "REDIRECT_URI", "test");
@@ -122,9 +122,24 @@ public class SpotifyMusicSourceTest {
     }
 
     @Test
+    public void getPlaylists_failSpotifyError() {
+        when(restTemplate.getForEntity(anyString(), eq(SpotifyPlaylistResponse.class))).thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
+        Exception ex = assertThrows(SpotifyApiException.class, ()-> spotifyMusicSource.getPlaylists());
+        assertTrue(ex.getMessage().contains("playlist"));
+    }
+
+
+    @Test
     public void getPlaylistTracks_success() {
         List<Song> tracks = spotifyMusicSource.getPlaylistTracks("test");
         assertNotEquals(0, tracks.size());
+    }
+
+    @Test
+    public void getPlaylistTracks_failSpotifyError() {
+        when(restTemplate.getForObject(anyString(), eq(SpotifyPlaylistTracksResponse.class))).thenThrow(new HttpClientErrorException(HttpStatus.BAD_REQUEST));
+        Exception ex = assertThrows(SpotifyApiException.class, () -> spotifyMusicSource.getPlaylistTracks("asdfgads"));
+        assertTrue(ex.getMessage().contains("tracks"));
     }
 
     @Test
@@ -147,7 +162,11 @@ public class SpotifyMusicSourceTest {
     }
 
     @Test
-    public void searchSong(Song song) {
-
+    public void searchSong_success() {
+        when(restTemplate.getForObject(anyString(), eq(SpotifySearchResponse.class))).thenReturn(new SpotifySearchResponse());
+        SpotifySong song = new SpotifySong("teadsad");
+        song.setName("testSong");
+        SpotifySearchResponse searchResponse = spotifyMusicSource.searchSong(song);
+        assertNotNull(searchResponse);
     }
 }

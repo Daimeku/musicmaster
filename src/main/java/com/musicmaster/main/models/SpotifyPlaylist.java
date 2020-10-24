@@ -12,7 +12,7 @@ public class SpotifyPlaylist implements Playlist {
     private String id;
     private String name;
     private List<SpotifySong> songs;
-    private String source = "SPOTIFY";
+    private final String source = "SPOTIFY";
     private String description;
     @JsonProperty(value = "public")
     private boolean isPublic;
@@ -66,7 +66,6 @@ public class SpotifyPlaylist implements Playlist {
             Song newSong = new Song();
             newSong.setName(song.getName());
             newSong.setAlbum(song.getAlbum());
-            newSong.setArtist(song.getArtist());
             songs.add(newSong);
         });
         return songs;
@@ -77,7 +76,6 @@ public class SpotifyPlaylist implements Playlist {
         songs.forEach( song-> {
             SpotifySong newSong = new SpotifySong();
             newSong.setName( song.getName());
-            newSong.setArtist(song.getArtist());
             newSong.setAlbum(song.getAlbum());
             this.songs.add(newSong);
         });
@@ -86,10 +84,6 @@ public class SpotifyPlaylist implements Playlist {
     @Override
     public String getSource() {
         return this.source;
-    }
-
-    public void setSource(String source) {
-        this.source = source;
     }
 
     @Override
