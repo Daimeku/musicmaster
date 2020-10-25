@@ -11,7 +11,7 @@ An application to manage playlists between streaming services (tidal/spotify cur
 - rename `application-example.yml` to `application.yml`
 - run project
 
-##usage
+## usage
 - authenticate spotify by navigating to http://localhost:8080/auth/login/spotify . This will redirect you to spotify for login.
 
 #### copy playlist from tidal to spotify
