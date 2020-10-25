@@ -18,9 +18,6 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class AuthControllerTest {
 
-    @Value("${test.spotify.authCode}")
-    private String testAuthCode;
-
     @LocalServerPort
     private String port;
 
