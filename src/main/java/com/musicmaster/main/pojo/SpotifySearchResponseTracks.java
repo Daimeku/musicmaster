@@ -1,8 +1,5 @@
 package com.musicmaster.main.pojo;
 
-import com.fasterxml.jackson.annotation.JsonRootName;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
-import com.musicmaster.main.helpers.SpotifySongListDeserializer;
 import com.musicmaster.main.models.SpotifySong;
 
 import java.util.List;
@@ -17,7 +14,6 @@ public class SpotifySearchResponseTracks {
         return items;
     }
 
-//    @JsonDeserialize(contentAs = SpotifySearchResponse.class)
     public void setItems(List<SpotifySong> items) {
         this.items = items;
     }
