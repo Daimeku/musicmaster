@@ -4,6 +4,7 @@ import com.musicmaster.main.clients.SpotifyMusicSource;
 import com.musicmaster.main.clients.TidalMusicSource;
 import com.musicmaster.main.models.*;
 import com.musicmaster.main.pojo.SpotifySearchResponse;
+import com.musicmaster.main.services.PlaylistTransferService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -24,6 +25,9 @@ public class PlaylistController {
 
     @Autowired
     TidalMusicSource tidalMusicSource;
+
+    @Autowired
+    PlaylistTransferService playlistTransferService;
 
     @GetMapping(path = "", produces = APPLICATION_JSON_VALUE)
     public List<Playlist> getPlaylists() {
@@ -57,5 +61,10 @@ public class PlaylistController {
     @GetMapping(path = "/tidal")
     public List<TidalSong> getTidalSongs(@RequestParam String playlistId) {
         return tidalMusicSource.getPlaylistTracks(playlistId);
+    }
+
+    @GetMapping(path = "/tidalToSpotify")
+    public Playlist copyFromTidalToSpotify(@RequestParam String playlistId, @RequestParam String playlistName) {
+        return playlistTransferService.copyTidalPlaylistToSpotify(playlistId, playlistName);
     }
 }

@@ -19,6 +19,7 @@ public class SpotifyPlaylist implements Playlist {
     private boolean collaborative;
 
     public SpotifyPlaylist() {
+        this.songs = new ArrayList<>();
     }
 
     public SpotifyPlaylist(SpotifyPlaylistRequest request) {

@@ -224,6 +224,8 @@ public class SpotifyMusicSource {
         preRequestSetup();
 
         String searchString = song.getName();
+        if(song.getArtist() != null)
+            searchString += " " + song.getArtist().getName();
 
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(API_BASEPATH + "/search")
                 .queryParam("q", searchString)
