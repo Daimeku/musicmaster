@@ -275,7 +275,7 @@ public class SpotifyMusicSource {
         config.setSpotifyToken(token);
         config.setSpotifyTokenExpiration(LocalDateTime.now().plusSeconds(expiration));
         userConfigRepository.save(config);
-
+        restTemplate.getInterceptors().clear();
         restTemplate.getInterceptors().add(new ClientHttpRequestInterceptor() {
             @Override
             public ClientHttpResponse intercept(HttpRequest httpRequest, byte[] bytes, ClientHttpRequestExecution clientHttpRequestExecution) throws IOException {

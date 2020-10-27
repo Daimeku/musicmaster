@@ -19,3 +19,8 @@ An application to manage playlists between streaming services (tidal/spotify cur
 - attach the following query params: 
     - `playlistId` : the ID of the tidal playlist
     - `playlistName` : the name of the new playlist being created in spotify
+    
+## todo
+- tidal auth 
+- add merge playlist functionality. Given a tidal playlist ID, update an existing spotify playlist with those songs, avoiding duplicates.
+- track playlists that get converted, build a local library.
