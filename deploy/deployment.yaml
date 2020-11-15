@@ -1,0 +1,25 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: musicmaster-deploy
+  labels:
+   app: musicmaster
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: musicmaster
+  template:
+    metadata:
+      labels:
+        app: musicmaster
+    spec:
+      containers:
+      - name: musicmaster-api
+        image: musicmaster-api
+        imagePullPolicy: Never
+        ports:
+        - containerPort: 8080
+        envFrom:
+        - secretRef:
+            name: musicmaster-secret
