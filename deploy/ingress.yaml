@@ -1,0 +1,19 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: musicmaster-ingress
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/rewrite-target: /$2
+spec:
+  rules:
+  - host: k8s
+    http:
+      paths:
+      - path: /musicmaster(/|$)(.*)
+        pathType: Prefix
+        backend:
+          service:
+            name: musicmaster-service
+            port:
+              number: 8080
