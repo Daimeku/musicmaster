@@ -51,10 +51,10 @@ public class PlaylistController {
         return playlist.getId();
     }
 
-    @GetMapping(path = "/search")
-    public SpotifySearchResponse search() {
-        SpotifySong song = new SpotifySong("");
-        song.setName("picking up bags");
+    @GetMapping(path = "/searchSpotify")
+    public SpotifySearchResponse searchSpotify(@RequestParam String songName) {
+        SpotifySong song = new SpotifySong();
+        song.setName(songName);
         return spotifyMusicSource.searchSong(song);
     }
 
