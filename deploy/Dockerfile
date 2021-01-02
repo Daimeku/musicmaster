@@ -7,6 +7,6 @@ COPY src src
 
 RUN mvn package -DskipTests
 
-FROM openjdk:16-slim as jdk
-COPY --from=maven /app/musicmaster/target/demo-0.0.1-SNAPSHOT.jar musicmaster.jar
+FROM openjdk:11-slim as jdk
+COPY --from=maven /app/musicmaster/target/musicmaster-0.0.1-SNAPSHOT.jar musicmaster.jar
 ENTRYPOINT ["java", "-jar","musicmaster.jar"]

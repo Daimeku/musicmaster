@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: musicmaster-configmap
+data:
+  ELASTIC_APM_SERVER_URL: http://10.103.249.172:8200
+  ELASTIC_APM_SERVICE_NAME: musicmaster-api
+  ELASTIC_APM_APPPLICATION_PACKAGES: com.musicmaster.main
+  ELASTIC_APM_LOG_LEVEL: TRACE
+  JAVA_TOOL_OPTIONS: -javaagent:/apm-agent/elastic-apm-agent.jar
