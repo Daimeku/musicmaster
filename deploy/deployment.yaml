@@ -23,3 +23,18 @@ spec:
         envFrom:
         - secretRef:
             name: musicmaster-secret
+        - configMapRef:
+            name: musicmaster-configmap
+        volumeMounts:
+        - mountPath: /apm-agent
+          name: apm-agent
+      initContainers:
+        - name: apm-agent
+          image: docker.elastic.co/observability/apm-agent-java:1.19.0
+          volumeMounts:
+          - mountPath: /apm-agent
+            name: apm-agent
+          command: ['cp', '-v', '/usr/agent/elastic-apm-agent.jar', '/apm-agent']
+      volumes:
+      - name: apm-volume
+        emptyDir: {}
