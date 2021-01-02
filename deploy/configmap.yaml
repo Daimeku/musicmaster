@@ -3,9 +3,7 @@ kind: ConfigMap
 metadata:
   name: musicmaster-configmap
 data:
-  ELASTIC_APM_SERVER_URL: http://k8s/apm
-  ELASTIC_APM_SERVICE_NAME: apm-service
+  ELASTIC_APM_SERVER_URL: http://apm-server:8200
+  ELASTIC_APM_SERVICE_NAME: musicmaster-api
   ELASTIC_APM_APPPLICATION_PACKAGES: com.musicmaster.main
-  ELASTIC_APM_ENVIRONMENT: dev
-  ELASTIC_APM_LOG_LEVEL: INFO
   JAVA_TOOLS_OPTIONS: -javaagent:/apm-agent/elastic-apm-agent.jar
