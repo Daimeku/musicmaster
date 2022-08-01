@@ -24,3 +24,7 @@ An application to manage playlists between streaming services (tidal/spotify cur
 - tidal auth 
 - add merge playlist functionality. Given a tidal playlist ID, update an existing spotify playlist with those songs, avoiding duplicates.
 - track playlists that get converted, build a local library.
+- handle spotify API limits
+  - setup task queue or other method to batch adding items to playlist. Spotify limits the number of songs it can add to a playlist per request (100 songs)
+  - simple approach is just iteratively make n/100 requests where n = number of songs
+- define interfaces for playlist classes instead of hard implementations

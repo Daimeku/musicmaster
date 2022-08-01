@@ -2,6 +2,8 @@ package com.musicmaster.main.controllers;
 
 import com.musicmaster.main.clients.SpotifyMusicSource;
 import com.musicmaster.main.clients.TidalMusicSource;
+import com.musicmaster.main.controllers.dto.CreateSpotifyPlaylistRequestBody;
+import com.musicmaster.main.exceptions.BadRequestException;
 import com.musicmaster.main.models.*;
 import com.musicmaster.main.pojo.SpotifySearchResponse;
 import com.musicmaster.main.services.PlaylistTransferService;
@@ -10,6 +12,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import javax.validation.Valid;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -63,8 +66,12 @@ public class PlaylistController {
         return tidalMusicSource.getPlaylistTracks(playlistId);
     }
 
-    @GetMapping(path = "/tidalToSpotify")
-    public Playlist copyFromTidalToSpotify(@RequestParam String playlistId, @RequestParam String playlistName) {
-        return playlistTransferService.copyTidalPlaylistToSpotify(playlistId, playlistName);
+    @PostMapping(path = "/tidalToSpotify")
+    public Playlist copyFromTidalToSpotify(@RequestBody CreateSpotifyPlaylistRequestBody requestBody) {
+        if (requestBody.getSpotifyPlaylistName() == null || requestBody.getTidalPlaylistId() == null) {
+            throw new BadRequestException("Missing required request parameter");
+        }
+        return playlistTransferService.copyTidalPlaylistToSpotify(requestBody.getTidalPlaylistId(),
+                requestBody.getSpotifyPlaylistName());
     }
 }
