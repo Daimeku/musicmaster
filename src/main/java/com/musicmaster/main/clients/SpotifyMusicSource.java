@@ -215,8 +215,31 @@ public class SpotifyMusicSource {
     }
 
     public SpotifyPlaylist createPlaylistAndAddTracks(SpotifyPlaylist sourcePlaylist) {
-        SpotifyPlaylist playlist = createPlaylist( sourcePlaylist);
-        boolean tracksAdded = addTracksToPlaylist(playlist.getId(), sourcePlaylist.getSpotifySongs());
+        SpotifyPlaylist playlist = createPlaylist(sourcePlaylist);
+
+        List<SpotifySong> allSpotifySongs = sourcePlaylist.getSpotifySongs();
+        List<List<SpotifySong>> spotifySongLists = new ArrayList<>();
+        List<SpotifySong> tempSongs = new ArrayList<>();
+        // spotify limits the number of songs per request to 100, so the songs have to be split into lists of 100
+        for (int songCount = 0; songCount < allSpotifySongs.size(); songCount++) {
+            tempSongs.add(allSpotifySongs.get(songCount));
+
+            if (tempSongs.size() == 100) {
+                spotifySongLists.add(tempSongs);
+                tempSongs = new ArrayList<>();
+            }
+        }
+        // handle leftover songs in case the list didn't fill up to 100
+        spotifySongLists.add(tempSongs);
+
+        for (List<SpotifySong> currentSongs : spotifySongLists) {
+            if (currentSongs.isEmpty())
+                continue;
+            boolean currentSongsAdded = addTracksToPlaylist(playlist.getId(), currentSongs);
+            if (!currentSongsAdded) {
+                logger.warn("Failed to add these songs to the playlist {}", currentSongs);
+            }
+        }
         return playlist;
     }
 
@@ -231,7 +254,7 @@ public class SpotifyMusicSource {
                 .queryParam("q", searchString)
                 .queryParam("type", "track");
         String url = builder.build(false).toUriString();
-        logger.info("searching url: ",url);
+        logger.info("searching url: {}", url);
         SpotifySearchResponse response;
         try {
             response = restTemplate.getForObject(url, SpotifySearchResponse.class);
