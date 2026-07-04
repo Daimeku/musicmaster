@@ -40,13 +40,7 @@ public class SpotifyMusicSource {
     @Value("${spotify.uri.auth}")
     private String AUTH_BASEPATH;
 
-    @Value("${spotify.client.id}")
-    private String CLIENT_ID;
-
-    @Value("${spotify.client.secret}")
-    private String CLIENT_SECRET;
-
-    @Value("${spotify.redirect.uri}")
+    @Value("${spotify.uri.redirect}")
     private String REDIRECT_URI;
 
     private RestTemplate restTemplate;
@@ -60,7 +54,7 @@ public class SpotifyMusicSource {
     }
 
     public SpotifyTokenResponse getToken(String authCode) {
-        logger.info("requesting spotify token");
+        logger.info("requesting Spotify token");
 
         MultiValueMap<String, String> spotifyTokenRequest = new LinkedMultiValueMap<>();
         spotifyTokenRequest.add("code", authCode);
@@ -74,12 +68,15 @@ public class SpotifyMusicSource {
 
         try {
             response = restTemplate.postForObject(AUTH_BASEPATH + "/token", request, SpotifyTokenResponse.class);
+            if (response == null)
+                throw new SpotifyApiException("Failed to load token response");
+
+            this.updateRequestToken(response.getAccessToken(), response.getExpiresIn());
         } catch (HttpClientErrorException ex) {
-            logger.error("spotify error", ex);
+            logger.error("Spotify error", ex);
             throw new SpotifyApiException(ex);
         }
-        logger.info("spotify token request successful");
-        this.updateRequestToken(response.getAccessToken(), response.getExpiresIn());
+        logger.info("Spotify token request successful");
 
         return response;
     }

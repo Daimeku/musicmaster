@@ -6,14 +6,15 @@ spotify:
     authorize: https://accounts.spotify.com/authorize?response_type=code&client_id={client_id}&scope={scope}&redirect_uri={redirect_uri}&state={state}
     auth: https://accounts.spotify.com/api
     api: https://api.spotify.com/v1
-    redirect: http://localhost:8080/auth/login/spotifyCallback
+    redirect: http://127.0.0.1:8080/auth/login/spotifyCallback
   scope: user-read-private user-read-email playlist-read-private playlist-read-collaborative playlist-modify-public playlist-modify-private
 
 tidal:
   uri:
     api: https://api.tidal.com/v1/
     authorize: https://login.tidal.com/authorize
-    redirect: http://localhost:8080/auth/login/tidalCallback
+    redirect: http://127.0.0.1:8080/auth/login/tidalCallback
+    auth: https://auth.tidal.com/v1/oauth2/token
   token: #{TIDAL_API_TOKEN}
   client:
     id: #{TIDAL_CLIENT_ID}

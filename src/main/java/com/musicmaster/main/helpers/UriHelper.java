@@ -2,6 +2,8 @@ package com.musicmaster.main.helpers;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 
@@ -23,16 +25,16 @@ public class UriHelper {
     @Value("${spotify.uri.redirect}")
     private String SPOTIFY_REDIRECT_URI;
 
-    @Value("${tidal.uri.authorize")
+    @Value("${tidal.uri.authorize}")
     private String TIDAL_BASEPATH;
 
-    @Value("${tidal.client.id")
+    @Value("${tidal.client.id}")
     private String TIDAL_CLIENT_ID;
 
     @Value("${tidal.scope}")
     private String TIDAL_SCOPE;
 
-    @Value("${tidal.uri.redirect")
+    @Value("${tidal.uri.redirect}")
     private String TIDAL_REDIRECT_URI;
 
     public String buildSpotifyAuthUri(String state) {
@@ -46,17 +48,19 @@ public class UriHelper {
         return uriComponents.toUriString();
     }
 
-    public String buildTidalAuthUri(String state) {
-        Map<String, String> queryParams = new HashMap<>();
-        queryParams.put("response_type", "code");
-        queryParams.put("client_id", TIDAL_CLIENT_ID);
-        queryParams.put("scope", TIDAL_SCOPE);
-        queryParams.put("redirect_uri", TIDAL_REDIRECT_URI);
-        queryParams.put("state", state);
-        queryParams.put("code_challenge_method", "S256");
-        String codeChallenge = ""; // TODO - generate code challenge
-        queryParams.put("code_challenge", codeChallenge);
-        UriComponents uriComponents = UriComponentsBuilder.fromUriString(TIDAL_BASEPATH).buildAndExpand(queryParams);
+    public String buildTidalAuthUri(String state, String codeChallenge) {
+        MultiValueMap<String, String> queryParams = new LinkedMultiValueMap<>();
+        queryParams.add("response_type", "code");
+        queryParams.add("client_id", TIDAL_CLIENT_ID);
+        queryParams.add("scope", TIDAL_SCOPE);
+        queryParams.add("redirect_uri", TIDAL_REDIRECT_URI);
+        queryParams.add("state", state);
+        queryParams.add("code_challenge_method", "S256");
+        queryParams.add("code_challenge", codeChallenge);
+        UriComponents uriComponents = UriComponentsBuilder
+                .fromUriString(TIDAL_BASEPATH)
+                .queryParams(queryParams)
+                .buildAndExpand();
         return uriComponents.toUriString();
     }
 }
