@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
-import java.util.UUID;
 
 @RestController
 @RequestMapping(path = "/auth")
@@ -26,20 +25,30 @@ public class AuthController {
 
     //update the spotify auth details for a given user
     @GetMapping(path = "/login/spotify")
-    public void loginSpotify(HttpServletResponse response) throws Exception{
-        String state = UUID.randomUUID().toString();
-        logger.info("redirecting user to spotify login. state: ", state);
-        //redirect to spotify
-        String uri = uriHelper.buildSpotifyAuthUri(state);
+    public void loginSpotify(HttpServletResponse response) throws Exception {
+        String uri = authService.getSpotifyRedirectUri();
         response.sendRedirect(uri);
     }
 
     //callback after spotify successful login, request tokens here
     @GetMapping(path = "/login/spotifyCallback")
     @ResponseStatus(HttpStatus.OK)
-    public String callbackSpotify(@RequestParam String code, @RequestParam String state, HttpServletRequest request, HttpServletResponse response) {
+    public void callbackSpotify(@RequestParam String code, @RequestParam String state, HttpServletRequest request, HttpServletResponse response) {
         logger.info("callback from successful spotify login. state: ", state);
         //@Todo - store and validate state
-        return authService.updateSpotifyAuthDetails(code);
+        authService.loadSpotifyAuthToken(code);
     }
+
+    @GetMapping(path = "/login/tidal")
+    public void loginTidal(HttpServletResponse response) throws Exception {
+        String uri = authService.getTidalRedirectUri();
+        response.sendRedirect(uri);
+    }
+
+    @GetMapping(path = "/login/tidalCallback")
+    @ResponseStatus(HttpStatus.OK)
+    public void callbackTidal(@RequestParam String code, @RequestParam String state) {
+
+    }
+
 }

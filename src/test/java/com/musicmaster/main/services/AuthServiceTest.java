@@ -5,7 +5,6 @@ import com.musicmaster.main.models.UserConfig;
 import com.musicmaster.main.pojo.SpotifyProfileDetails;
 import com.musicmaster.main.pojo.SpotifyTokenResponse;
 import com.musicmaster.main.repositories.UserConfigRepository;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -39,9 +38,8 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void updateSpotifyAuthDetails_success() {
-        String status = authService.updateSpotifyAuthDetails("test");
+    public void loadSpotifyAuthToken_success() {
+        authService.loadSpotifyAuthToken("test");
         verify(userConfigRepository, times(2)).save(any());
-        Assertions.assertNotNull(status);
     }
 }

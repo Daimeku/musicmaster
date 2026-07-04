@@ -21,7 +21,11 @@ An application to manage playlists between streaming services (tidal/spotify cur
     - `playlistName` : the name of the new playlist being created in spotify
     
 ## todo
-- tidal auth 
+- use tidal API
+  - implement a tidal oauth login using the authorization code flow so. Users should be able to login with their own credentials
+  - update UserConfig support tidal token and credentials
+  - update authservice to support tidal login flow
+  - add login and callback endpoints to controller
 - add merge playlist functionality. Given a tidal playlist ID, update an existing spotify playlist with those songs, avoiding duplicates.
 - track playlists that get converted, build a local library.
 - handle spotify API limits

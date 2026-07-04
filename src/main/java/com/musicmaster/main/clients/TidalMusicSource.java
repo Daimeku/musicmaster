@@ -60,4 +60,5 @@ public class TidalMusicSource {
 
         return uriComponentsBuilder.build(false).toUriString();
     }
+
 }

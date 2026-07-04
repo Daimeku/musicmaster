@@ -50,14 +50,12 @@ public class SpotifyMusicSource {
     private String REDIRECT_URI;
 
     private RestTemplate restTemplate;
-    private RestTemplateBuilder restTemplateBuilder;
 
     @Autowired
     private UserConfigRepository userConfigRepository;
 
     public SpotifyMusicSource(RestTemplateBuilder restTemplateBuilder, @Value("${spotify.client.id}") String clientId, @Value("${spotify.client.secret}") String clientSecret, UserConfigRepository userConfigRepository) {
         this.restTemplate = restTemplateBuilder.basicAuthentication(clientId,clientSecret).build();
-        this.restTemplateBuilder = restTemplateBuilder;
         this.userConfigRepository = userConfigRepository;
     }
 
@@ -282,18 +280,16 @@ public class SpotifyMusicSource {
     private boolean tokenExpired() {
         UserConfig config = userConfigRepository.getOne(1);
 
-        if(restTemplate.getInterceptors().size() < 1)
+        if(restTemplate.getInterceptors().isEmpty())
             return true;
-        //offset expiration by a few seconds
+        //offset expiration by a few seconds to refresh tokens expiring soon
         if(config.getSpotifyTokenExpiration().isBefore(LocalDateTime.now().minusSeconds(20)))
             return true;
-
 
         return false;
     }
 
     private void updateRequestToken(String token, int expiration) {
-
         UserConfig config = userConfigRepository.findById(1).orElse(new UserConfig());;
         config.setSpotifyToken(token);
         config.setSpotifyTokenExpiration(LocalDateTime.now().plusSeconds(expiration));

@@ -6,14 +6,19 @@ spotify:
     authorize: https://accounts.spotify.com/authorize?response_type=code&client_id={client_id}&scope={scope}&redirect_uri={redirect_uri}&state={state}
     auth: https://accounts.spotify.com/api
     api: https://api.spotify.com/v1
-  redirect:
-    uri: http://localhost:8080/auth/login/spotifyCallback
+    redirect: http://localhost:8080/auth/login/spotifyCallback
   scope: user-read-private user-read-email playlist-read-private playlist-read-collaborative playlist-modify-public playlist-modify-private
 
 tidal:
   uri:
     api: https://api.tidal.com/v1/
+    authorize: https://login.tidal.com/authorize
+    redirect: http://localhost:8080/auth/login/tidalCallback
   token: #{TIDAL_API_TOKEN}
+  client:
+    id: #{TIDAL_CLIENT_ID}
+    secret: #{TIDAL_CLIENT_SECRET}
+  scope: collection.read collection.write entitlements.read playlists.read playlists.write recommendations.read search.read search.write user.read
 
 #db
 spring:
