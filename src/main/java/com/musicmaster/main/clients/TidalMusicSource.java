@@ -5,6 +5,7 @@ import com.musicmaster.main.models.TidalSong;
 import com.musicmaster.main.pojo.TidalPlaylistData;
 import com.musicmaster.main.pojo.TidalPlaylistTracksResponse;
 import com.musicmaster.main.pojo.LegacyTidalTracksResponse;
+import com.musicmaster.main.pojo.TidalTrack;
 import com.musicmaster.main.pojo.TidalTracksResponse;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -23,6 +24,8 @@ import java.util.stream.Collectors;
 @Service
 public class TidalMusicSource {
     private static Logger logger = LoggerFactory.getLogger(TidalMusicSource.class);
+    private static final int TRACK_FILTER_BATCH_SIZE = 20;
+    private static final int TRACK_REQUEST_DELAY_MS = 400;
 
     @Value("${tidal.uri.api}")
     private String API_BASEPATH;
@@ -96,26 +99,40 @@ public class TidalMusicSource {
     }
 
 
-    public TidalTracksResponse getTracks(List<String> trackIds) {
-        String filteredIds = String.join(",", trackIds);
-        UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(API_BASEPATH + "/tracks")
-                .queryParam("countryCode", "JM")
-                .queryParam("limit", 1000)
-                .queryParam("filter[id]", trackIds);
+    public List<TidalTrack> getTracks(List<String> trackIds) {
+        List<TidalTrack> tracks = new ArrayList<>();
+        if (trackIds.isEmpty())
+            return tracks;
 
-        String uri = uriComponentsBuilder.build(false).toUriString();
-
-        TidalTracksResponse response;
         try {
-            logger.info("requesting tidal tracks uri: " + uri);
-            response = restTemplate.getForObject(uri, TidalTracksResponse.class);
-            if (response == null)
-                throw new TidalApiException("Failed to get tracks response");
+            for (int startIndex = 0; startIndex < trackIds.size(); startIndex += TRACK_FILTER_BATCH_SIZE) {
+                if (startIndex > 0)
+                    Thread.sleep(TRACK_REQUEST_DELAY_MS);
+
+                List<String> currentTrackIds = trackIds.subList(startIndex,
+                        Math.min(startIndex + TRACK_FILTER_BATCH_SIZE, trackIds.size()));
+                UriComponentsBuilder uriComponentsBuilder = UriComponentsBuilder.fromHttpUrl(API_BASEPATH + "/tracks")
+                        .queryParam("countryCode", "JM")
+                        .queryParam("limit", 1000)
+                        .queryParam("filter[id]", currentTrackIds);
+
+                String uri = uriComponentsBuilder.build(false).toUriString();
+                logger.info("requesting tidal tracks uri: " + uri);
+
+                TidalTracksResponse response = restTemplate.getForObject(uri, TidalTracksResponse.class);
+                if (response == null)
+                    throw new TidalApiException("Failed to get tracks response");
+                if (response.getData() != null)
+                    tracks.addAll(response.getData());
+            }
         } catch(HttpClientErrorException ex) {
             throw new TidalApiException("error getting tracks tracks", ex);
+        } catch (InterruptedException e) {
+            logger.error("thread interrupted");
+            throw new RuntimeException(e);
         }
 
-        return response;
+        return tracks;
     }
 
     private String addQueryParams(String uri, String cursor) {

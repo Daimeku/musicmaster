@@ -5,18 +5,24 @@ import com.musicmaster.main.clients.TidalMusicSource;
 import com.musicmaster.main.models.*;
 import com.musicmaster.main.pojo.SpotifySearchResponse;
 import com.musicmaster.main.pojo.SpotifySearchResponseTracks;
+import com.musicmaster.main.pojo.TidalTrack;
+import com.musicmaster.main.pojo.TidalTrackAttributes;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
@@ -32,29 +38,32 @@ public class PlaylistTransferServiceTest {
 
     @BeforeEach
     public void init() {
-        setupSpotifyMocks();
-        setupTidalMocks();
         playlistTransferService = new PlaylistTransferService(spotifyMusicSource, tidalMusicSource);
     }
 
     @Test
     public void copyTidalPlaylistToSpotify_success() {
+        setupSpotifyMocks();
+        setupTidalMocks();
+
         Playlist spotifyPlaylist = playlistTransferService.copyTidalPlaylistToSpotify("testId", "new-name");
-        Assertions.assertTrue(spotifyPlaylist.getName().length() > 0);
+
+        Assertions.assertEquals("test-playlist", spotifyPlaylist.getName());
+        verify(tidalMusicSource).getAllPlaylistsTrackIds("testId");
+        verify(tidalMusicSource).getTracks(Arrays.asList("track-1"));
+        verify(tidalMusicSource, never()).getPlaylistTracks("testId");
+
+        ArgumentCaptor<SpotifySong> searchSongCaptor = ArgumentCaptor.forClass(SpotifySong.class);
+        verify(spotifyMusicSource).searchSong(searchSongCaptor.capture());
+        Assertions.assertEquals("tidal-title", searchSongCaptor.getValue().getName());
+        Assertions.assertEquals("USRC17607839", searchSongCaptor.getValue().getIsrc());
+        Assertions.assertNull(searchSongCaptor.getValue().getAlbum());
+        Assertions.assertNull(searchSongCaptor.getValue().getArtist());
     }
 
     private void setupTidalMocks() {
-        List<TidalSong> tidalSongs = new ArrayList<>();
-        TidalSong tidalSong = new TidalSong();
-        TidalAlbum album = new TidalAlbum();
-        album.setName("test");
-        album.setTitle("test");
-        Artist artist = new Artist();
-        tidalSong.setName("test");
-        tidalSong.setAlbum(album);
-        tidalSong.setArtist(artist);
-        tidalSongs.add(tidalSong);
-        when(tidalMusicSource.getPlaylistTracks(anyString())).thenReturn(tidalSongs);
+        when(tidalMusicSource.getAllPlaylistsTrackIds("testId")).thenReturn(Arrays.asList("track-1"));
+        when(tidalMusicSource.getTracks(Arrays.asList("track-1"))).thenReturn(Arrays.asList(tidalTrack("tidal-title", "USRC17607839")));
     }
 
     private void setupSpotifyMocks() {
@@ -71,5 +80,15 @@ public class PlaylistTransferServiceTest {
 
         SpotifyPlaylist spotifyPlaylist = new SpotifyPlaylist("test-playlist");
         when(spotifyMusicSource.createPlaylistAndAddTracks(any(SpotifyPlaylist.class))).thenReturn(spotifyPlaylist);
+    }
+
+    private TidalTrack tidalTrack(String title, String isrc) {
+        TidalTrackAttributes attributes = new TidalTrackAttributes();
+        attributes.setTitle(title);
+        attributes.setIsrc(isrc);
+
+        TidalTrack track = new TidalTrack();
+        track.setAttributes(attributes);
+        return track;
     }
 }
