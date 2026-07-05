@@ -36,4 +36,4 @@ build/
 /src/main/resources/application.yml
 musicmaster-db.*
 .mvn
-musicmaster.mv.db
+*musicmaster.*.db

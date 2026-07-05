@@ -11,13 +11,9 @@ import com.musicmaster.main.pojo.TidalPlaylistTracksResponse;
 import com.musicmaster.main.pojo.TidalTracksResponse;
 import com.musicmaster.main.services.PlaylistTransferService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -66,18 +62,13 @@ public class PlaylistController {
     }
 
     @GetMapping(path = "/tidal")
-    public TidalPlaylistTracksResponse getTidalSongs(@RequestParam String playlistId) {
-        return tidalMusicSource.getPlaylistTracksResponse(playlistId);
+    public List<String> getTidalSongs(@RequestParam String playlistId) {
+        return tidalMusicSource.getAllPlaylistsTrackIds(playlistId);
     }
 
     @GetMapping(path = "/tidalPlaylistTracks")
     public TidalTracksResponse getTidalPlaylistTracks(@RequestParam String playlistId) {
-        TidalPlaylistTracksResponse playlistTracksResponse = tidalMusicSource.getPlaylistTracksResponse(playlistId);
-
-        List<String> trackIds = playlistTracksResponse.getData().stream()
-                .map(TidalPlaylistData::getId)
-                .collect(Collectors.toList());
-
+        List<String> trackIds = tidalMusicSource.getAllPlaylistsTrackIds(playlistId);
         return tidalMusicSource.getTracks(trackIds);
     }
 

@@ -2,7 +2,7 @@ package com.musicmaster.main.pojo;
 
 public class TidalPlaylistData {
     private String id;
-    private String type;
+    private String type; // TODO - support non-track types
     private TidalPlaylistDataMeta meta;
 
     public String getId() {

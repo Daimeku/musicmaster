@@ -30,14 +30,3 @@ public class TidalLinks {
     }
 }
 
-class TidalLinksMeta {
-    String nextCursor;
-
-    public String getNextCursor() {
-        return nextCursor;
-    }
-
-    public void setNextCursor(String nextCursor) {
-        this.nextCursor = nextCursor;
-    }
-}
