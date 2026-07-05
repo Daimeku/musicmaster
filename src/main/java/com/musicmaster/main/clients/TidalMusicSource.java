@@ -59,7 +59,6 @@ public class TidalMusicSource {
         List<String> trackIds = new ArrayList<>();
         String cursor = null;
         try {
-            boolean hasNextPage = true;
             int currentPage = 1;
             while (true) {
                 if (currentPage > 1)
@@ -85,7 +84,6 @@ public class TidalMusicSource {
                 cursor = response.getLinks().getMeta().getNextCursor();
                 logger.info("next link: {}", cursor);
                 currentPage++;
-                response = null;
             }
         } catch(HttpClientErrorException ex) {
             throw new TidalApiException("error getting playlist tracks", ex);
