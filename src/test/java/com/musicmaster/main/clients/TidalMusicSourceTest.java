@@ -1,8 +1,7 @@
 package com.musicmaster.main.clients;
 
-import com.musicmaster.main.models.SpotifySong;
 import com.musicmaster.main.models.TidalSong;
-import com.musicmaster.main.pojo.TidalTracksResponse;
+import com.musicmaster.main.pojo.LegacyTidalTracksResponse;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -38,10 +37,10 @@ public class TidalMusicSourceTest {
     public void init() {
         List<TidalSong> songs = new ArrayList<>();
         songs.add(new TidalSong());
-        TidalTracksResponse tidalTracksResponse = new TidalTracksResponse();
-        tidalTracksResponse.setData(songs);
+        LegacyTidalTracksResponse legacyTidalTracksResponse = new LegacyTidalTracksResponse();
+        legacyTidalTracksResponse.setData(songs);
         when(restTemplateBuilder.build()).thenReturn(restTemplate);
-        when(restTemplate.getForObject(anyString(), eq(TidalTracksResponse.class))).thenReturn(tidalTracksResponse);
+        when(restTemplate.getForObject(anyString(), eq(LegacyTidalTracksResponse.class))).thenReturn(legacyTidalTracksResponse);
         tidalMusicSource = new TidalMusicSource(restTemplateBuilder, tidalAuthInterceptor );
         ReflectionTestUtils.setField(tidalMusicSource, "API_BASEPATH", "http://testing");
         ReflectionTestUtils.setField(tidalMusicSource, "TIDAL_TOKEN", "asdfasdfa");
