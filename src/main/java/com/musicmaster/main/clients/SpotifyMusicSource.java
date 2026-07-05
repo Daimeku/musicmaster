@@ -49,7 +49,7 @@ public class SpotifyMusicSource {
     private UserConfigRepository userConfigRepository;
 
     public SpotifyMusicSource(RestTemplateBuilder restTemplateBuilder, @Value("${spotify.client.id}") String clientId, @Value("${spotify.client.secret}") String clientSecret, UserConfigRepository userConfigRepository) {
-        this.restTemplate = restTemplateBuilder.basicAuthentication(clientId,clientSecret).build();
+        this.restTemplate = restTemplateBuilder.basicAuthentication(clientId, clientSecret).build();
         this.userConfigRepository = userConfigRepository;
     }
 

@@ -2,6 +2,7 @@ package com.musicmaster.main.clients;
 
 import com.musicmaster.main.exceptions.TidalApiException;
 import com.musicmaster.main.models.TidalSong;
+import com.musicmaster.main.models.UserConfig;
 import com.musicmaster.main.pojo.TidalTokenResponse;
 import com.musicmaster.main.pojo.TidalTracksResponse;
 import com.musicmaster.main.repositories.UserConfigRepository;
@@ -23,15 +24,13 @@ import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Service
 public class TidalMusicSource {
     @Value("${tidal.uri.api}")
     private String API_BASEPATH;
-
-    @Value("${tidal.token}")
-    private String TIDAL_TOKEN;
 
     @Value("${tidal.uri.auth}")
     private String TIDAL_AUTH_BASEPATH;
@@ -49,13 +48,15 @@ public class TidalMusicSource {
 
     public TidalMusicSource(RestTemplateBuilder restTemplateBuilder) {
         this.restTemplate = restTemplateBuilder.build();
-//        restTemplate.getInterceptors().add(new ClientHttpRequestInterceptor() {
-//            @Override
-//            public ClientHttpResponse intercept(HttpRequest httpRequest, byte[] bytes, ClientHttpRequestExecution clientHttpRequestExecution) throws IOException {
-//                httpRequest.getHeaders().add("x-tidal-token", TIDAL_TOKEN);
-//                return clientHttpRequestExecution.execute(httpRequest, bytes);
-//            }
-//        });
+        String authToken = getValidAuthToken();
+        restTemplate.getInterceptors().add(new ClientHttpRequestInterceptor() {
+            @Override
+            public ClientHttpResponse intercept(HttpRequest httpRequest, byte[] bytes, ClientHttpRequestExecution clientHttpRequestExecution) throws IOException {
+                HttpHeaders headers = httpRequest.getHeaders();
+                headers.add("Authorization",  "Bearer " + authToken);
+                return clientHttpRequestExecution.execute(httpRequest, bytes);
+            }
+        });
     }
 
     public List<TidalSong> getPlaylistTracks(String playlistId) {
@@ -101,4 +102,21 @@ public class TidalMusicSource {
         return response;
     }
 
+    public String getValidAuthToken() {
+        UserConfig userConfig = userConfigRepository.getOne(1);
+        if (isTokenExpired(userConfig)) {
+            // TODO - update token flow
+        }
+        return userConfig.getTidalToken();
+    }
+
+    private boolean isTokenExpired(UserConfig userConfig) {
+        if (restTemplate.getInterceptors().isEmpty())
+            return true;
+
+        if (userConfig.getTidalTokenExpiration().isBefore(LocalDateTime.now().minusSeconds(20)))
+            return true;
+
+        return false;
+    }
 }
