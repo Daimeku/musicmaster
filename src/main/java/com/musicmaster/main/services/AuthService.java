@@ -1,7 +1,7 @@
 package com.musicmaster.main.services;
 
 import com.musicmaster.main.clients.SpotifyMusicSource;
-import com.musicmaster.main.clients.TidalMusicSource;
+import com.musicmaster.main.clients.TidalAuthClient;
 import com.musicmaster.main.helpers.UriHelper;
 import com.musicmaster.main.models.UserConfig;
 import com.musicmaster.main.pojo.SpotifyProfileDetails;
@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
@@ -30,7 +29,7 @@ public class AuthService {
 
     private final SpotifyMusicSource spotifyMusicSource;
 
-    private final TidalMusicSource tidalMusicSource;
+    private final TidalAuthClient tidalAuthClient;
 
     private final UriHelper uriHelper;
 
@@ -38,12 +37,12 @@ public class AuthService {
     public AuthService(
             UserConfigRepository userConfigRepository,
             SpotifyMusicSource spotifyMusicSource,
-            TidalMusicSource tidalMusicSource,
+            TidalAuthClient tidalAuthClient,
             UriHelper uriHelper
     ) {
         this.userConfigRepository = userConfigRepository;
         this.spotifyMusicSource = spotifyMusicSource;
-        this.tidalMusicSource = tidalMusicSource;
+        this.tidalAuthClient = tidalAuthClient;
         this.uriHelper = uriHelper;
     }
 
@@ -63,11 +62,11 @@ public class AuthService {
 
     public void loadTidalAuthToken(String authCode) {
         UserConfig config = userConfigRepository.getOne(1);
-        TidalTokenResponse tokenResponse = tidalMusicSource.getToken(authCode, config.getTidalChallengeVerifier());
+        TidalTokenResponse tokenResponse = tidalAuthClient.getToken(authCode, config.getTidalChallengeVerifier());
 
         config.setTidalToken(tokenResponse.getAccessToken());
         config.setTidalRefreshToken(tokenResponse.getRefreshToken());
-        config.setTidalTokenExpiration(LocalDateTime.now().plusSeconds(tokenResponse.getExpiresIn()));
+        config.updateTidalTokenExpiration(tokenResponse.getExpiresIn());
         userConfigRepository.save(config);
     }
 

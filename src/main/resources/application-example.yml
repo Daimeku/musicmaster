@@ -11,11 +11,10 @@ spotify:
 
 tidal:
   uri:
-    api: https://api.tidal.com/v1/
+    api: https://openapi.tidal.com/v2
     authorize: https://login.tidal.com/authorize
     redirect: http://127.0.0.1:8080/auth/login/tidalCallback
     auth: https://auth.tidal.com/v1/oauth2/token
-  token: #{TIDAL_API_TOKEN}
   client:
     id: #{TIDAL_CLIENT_ID}
     secret: #{TIDAL_CLIENT_SECRET}

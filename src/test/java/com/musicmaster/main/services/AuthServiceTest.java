@@ -1,6 +1,7 @@
 package com.musicmaster.main.services;
 
 import com.musicmaster.main.clients.SpotifyMusicSource;
+import com.musicmaster.main.clients.TidalAuthClient;
 import com.musicmaster.main.clients.TidalMusicSource;
 import com.musicmaster.main.helpers.UriHelper;
 import com.musicmaster.main.models.UserConfig;
@@ -28,14 +29,14 @@ public class AuthServiceTest {
     SpotifyMusicSource spotifyMusicSource;
 
     @Mock
-    TidalMusicSource tidalMusicSource;
+    TidalAuthClient tidalAuthClient;
 
     @Mock
     UriHelper uriHelper;
 
     @BeforeEach
     public void init() {
-        authService = new AuthService(userConfigRepository, spotifyMusicSource, tidalMusicSource, uriHelper);
+        authService = new AuthService(userConfigRepository, spotifyMusicSource, tidalAuthClient, uriHelper);
         SpotifyTokenResponse mockSpotifyResponse = new SpotifyTokenResponse();
         SpotifyProfileDetails mockProfileDetails = new SpotifyProfileDetails("test");
 

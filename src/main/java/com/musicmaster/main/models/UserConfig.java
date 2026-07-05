@@ -114,6 +114,10 @@ public class UserConfig {
         this.tidalTokenExpiration = tidalTokenExpiration;
     }
 
+    public void updateTidalTokenExpiration(int expiresIn) {
+        this.tidalTokenExpiration = LocalDateTime.now().plusSeconds(expiresIn);
+    }
+
     public String getTidalRefreshToken() {
         return tidalRefreshToken;
     }

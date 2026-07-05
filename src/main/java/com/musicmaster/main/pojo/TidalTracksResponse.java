@@ -9,7 +9,7 @@ public class TidalTracksResponse {
     private int limit;
     private int offset;
     private int totalNumberOfItems;
-    private List<TidalSong> items;
+    private List<TidalSong> data;
 
     public int getLimit() {
         return limit;
@@ -35,11 +35,11 @@ public class TidalTracksResponse {
         this.totalNumberOfItems = totalNumberOfItems;
     }
 
-    public List<TidalSong> getItems() {
-        return items;
+    public List<TidalSong> getData() {
+        return data;
     }
 
-    public void setItems(List<TidalSong> items) {
-        this.items = items;
+    public void setData(List<TidalSong> data) {
+        this.data = data;
     }
 }

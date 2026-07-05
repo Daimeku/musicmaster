@@ -29,6 +29,9 @@ public class TidalMusicSourceTest {
     @Mock
     private RestTemplate restTemplate;
 
+    @Mock
+    private TidalAuthInterceptor tidalAuthInterceptor;
+
     private TidalMusicSource tidalMusicSource;
 
     @BeforeEach
@@ -36,10 +39,10 @@ public class TidalMusicSourceTest {
         List<TidalSong> songs = new ArrayList<>();
         songs.add(new TidalSong());
         TidalTracksResponse tidalTracksResponse = new TidalTracksResponse();
-        tidalTracksResponse.setItems(songs);
+        tidalTracksResponse.setData(songs);
         when(restTemplateBuilder.build()).thenReturn(restTemplate);
         when(restTemplate.getForObject(anyString(), eq(TidalTracksResponse.class))).thenReturn(tidalTracksResponse);
-        tidalMusicSource = new TidalMusicSource(restTemplateBuilder);
+        tidalMusicSource = new TidalMusicSource(restTemplateBuilder, tidalAuthInterceptor );
         ReflectionTestUtils.setField(tidalMusicSource, "API_BASEPATH", "http://testing");
         ReflectionTestUtils.setField(tidalMusicSource, "TIDAL_TOKEN", "asdfasdfa");
     }
