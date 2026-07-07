@@ -6,16 +6,14 @@ import com.musicmaster.main.controllers.dto.CreateSpotifyPlaylistRequestBody;
 import com.musicmaster.main.exceptions.BadRequestException;
 import com.musicmaster.main.models.*;
 import com.musicmaster.main.pojo.SpotifySearchResponse;
+import com.musicmaster.main.pojo.TidalTrack;
 import com.musicmaster.main.services.PlaylistTransferService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import javax.validation.Valid;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
@@ -48,7 +46,7 @@ public class PlaylistController {
         song.setName("Bluffin");
         List<SpotifySong> songs = new ArrayList<>();
         songs.add(song);
-        SpotifyPlaylist playlist = new SpotifyPlaylist("brand-new-playlist");
+        SpotifyPlaylist playlist = new SpotifyPlaylist("brand-new-playlist3");
         playlist.setSpotifySongs(songs);
         playlist = spotifyMusicSource.createPlaylistAndAddTracks(playlist);
         return playlist.getId();
@@ -62,8 +60,14 @@ public class PlaylistController {
     }
 
     @GetMapping(path = "/tidal")
-    public List<TidalSong> getTidalSongs(@RequestParam String playlistId) {
-        return tidalMusicSource.getPlaylistTracks(playlistId);
+    public List<String> getTidalSongs(@RequestParam String playlistId) {
+        return tidalMusicSource.getAllPlaylistsTrackIds(playlistId);
+    }
+
+    @GetMapping(path = "/tidalPlaylistTracks")
+    public List<TidalTrack> getTidalPlaylistTracks(@RequestParam String playlistId) {
+        List<String> trackIds = tidalMusicSource.getAllPlaylistsTrackIds(playlistId);
+        return tidalMusicSource.getTracks(trackIds);
     }
 
     @PostMapping(path = "/tidalToSpotify")

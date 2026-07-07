@@ -5,6 +5,7 @@ import java.util.List;
 public class Song {
 
     protected String name;
+    private String isrc;
     private Album album;
     private Artist artist;
 
@@ -14,6 +15,14 @@ public class Song {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getIsrc() {
+        return isrc;
+    }
+
+    public void setIsrc(String isrc) {
+        this.isrc = isrc;
     }
 
     public Album getAlbum() {

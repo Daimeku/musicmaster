@@ -32,7 +32,7 @@ import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
 @Service
 public class SpotifyMusicSource {
 
-    private static Logger logger = LoggerFactory.getLogger(SpotifyMusicSource.class);
+    private static final Logger logger = LoggerFactory.getLogger(SpotifyMusicSource.class);
 
     @Value("${spotify.uri.api}")
     private String API_BASEPATH;
@@ -40,29 +40,21 @@ public class SpotifyMusicSource {
     @Value("${spotify.uri.auth}")
     private String AUTH_BASEPATH;
 
-    @Value("${spotify.client.id}")
-    private String CLIENT_ID;
-
-    @Value("${spotify.client.secret}")
-    private String CLIENT_SECRET;
-
-    @Value("${spotify.redirect.uri}")
+    @Value("${spotify.uri.redirect}")
     private String REDIRECT_URI;
 
-    private RestTemplate restTemplate;
-    private RestTemplateBuilder restTemplateBuilder;
+    private final RestTemplate restTemplate;
 
     @Autowired
     private UserConfigRepository userConfigRepository;
 
     public SpotifyMusicSource(RestTemplateBuilder restTemplateBuilder, @Value("${spotify.client.id}") String clientId, @Value("${spotify.client.secret}") String clientSecret, UserConfigRepository userConfigRepository) {
-        this.restTemplate = restTemplateBuilder.basicAuthentication(clientId,clientSecret).build();
-        this.restTemplateBuilder = restTemplateBuilder;
+        this.restTemplate = restTemplateBuilder.basicAuthentication(clientId, clientSecret).build();
         this.userConfigRepository = userConfigRepository;
     }
 
     public SpotifyTokenResponse getToken(String authCode) {
-        logger.info("requesting spotify token");
+        logger.info("requesting Spotify token");
 
         MultiValueMap<String, String> spotifyTokenRequest = new LinkedMultiValueMap<>();
         spotifyTokenRequest.add("code", authCode);
@@ -76,12 +68,15 @@ public class SpotifyMusicSource {
 
         try {
             response = restTemplate.postForObject(AUTH_BASEPATH + "/token", request, SpotifyTokenResponse.class);
+            if (response == null)
+                throw new SpotifyApiException("Failed to load token response");
+
+            this.updateRequestToken(response.getAccessToken(), response.getExpiresIn());
         } catch (HttpClientErrorException ex) {
-            logger.error("spotify error", ex);
+            logger.error("Spotify error", ex);
             throw new SpotifyApiException(ex);
         }
-        logger.info("spotify token request successful");
-        this.updateRequestToken(response.getAccessToken(), response.getExpiresIn());
+        logger.info("Spotify token request successful");
 
         return response;
     }
@@ -102,6 +97,8 @@ public class SpotifyMusicSource {
         SpotifyTokenResponse response;
         try {
              response = restTemplate.postForObject( AUTH_BASEPATH + "/token", request, SpotifyTokenResponse.class);
+             if (response == null)
+                 throw new SpotifyApiException("Failed to get refresh token response");
         } catch (HttpClientErrorException ex) {
             throw new SpotifyApiException("Error retrieving refresh token", ex);
         }
@@ -141,11 +138,10 @@ public class SpotifyMusicSource {
         }
 
 
-        List<Playlist> playlists = new ArrayList<>();
-        response.getBody().getItems()
-                .forEach((item) -> playlists.add(item) );
+        if (response.getBody() == null)
+            return new ArrayList<>();
 
-        return playlists;
+        return new ArrayList<>(response.getBody().getItems());
     }
 
     public List<Song> getPlaylistTracks(String id) {
@@ -164,7 +160,7 @@ public class SpotifyMusicSource {
         List<SpotifyPlaylistItem> playlistItems = playlistReponse.getItems();
 
         List<Song> songs = new ArrayList<>();
-        playlistItems.stream().forEach(item->songs.add(item.getTrack()));
+        playlistItems.forEach(item->songs.add(item.getTrack()));
 
         return songs;
 
@@ -221,8 +217,8 @@ public class SpotifyMusicSource {
         List<List<SpotifySong>> spotifySongLists = new ArrayList<>();
         List<SpotifySong> tempSongs = new ArrayList<>();
         // spotify limits the number of songs per request to 100, so the songs have to be split into lists of 100
-        for (int songCount = 0; songCount < allSpotifySongs.size(); songCount++) {
-            tempSongs.add(allSpotifySongs.get(songCount));
+        for (SpotifySong allSpotifySong : allSpotifySongs) {
+            tempSongs.add(allSpotifySong);
 
             if (tempSongs.size() == 100) {
                 spotifySongLists.add(tempSongs);
@@ -246,8 +242,14 @@ public class SpotifyMusicSource {
     public SpotifySearchResponse searchSong(SpotifySong song) {
         preRequestSetup();
 
-        String searchString = song.getName();
-        if(song.getArtist() != null)
+        String searchString;
+        if (hasText(song.getIsrc())) {
+            searchString = "isrc:" + song.getIsrc().trim();
+        } else {
+            searchString = song.getName() == null ? "" : song.getName();
+        }
+
+        if(!hasText(song.getIsrc()) && song.getArtist() != null && hasText(song.getArtist().getName()))
             searchString += " " + song.getArtist().getName();
 
         UriComponentsBuilder builder = UriComponentsBuilder.fromHttpUrl(API_BASEPATH + "/search")
@@ -268,6 +270,10 @@ public class SpotifyMusicSource {
         return response;
     }
 
+    private boolean hasText(String value) {
+        return value != null && !value.trim().isEmpty();
+    }
+
     private List<String> formatTrackUri(List<SpotifySong> tracks) {
         List<String> trackUris = new ArrayList<>(tracks.size());
         tracks.forEach(track -> trackUris.add("spotify:track:" + track.getId()));
@@ -282,18 +288,13 @@ public class SpotifyMusicSource {
     private boolean tokenExpired() {
         UserConfig config = userConfigRepository.getOne(1);
 
-        if(restTemplate.getInterceptors().size() < 1)
+        if(restTemplate.getInterceptors().isEmpty())
             return true;
-        //offset expiration by a few seconds
-        if(config.getSpotifyTokenExpiration().isBefore(LocalDateTime.now().minusSeconds(20)))
-            return true;
-
-
-        return false;
+        //offset expiration by a few seconds to refresh tokens expiring soon
+        return config.getSpotifyTokenExpiration().isBefore(LocalDateTime.now().minusSeconds(20));
     }
 
     private void updateRequestToken(String token, int expiration) {
-
         UserConfig config = userConfigRepository.findById(1).orElse(new UserConfig());;
         config.setSpotifyToken(token);
         config.setSpotifyTokenExpiration(LocalDateTime.now().plusSeconds(expiration));

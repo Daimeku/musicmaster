@@ -1,11 +1,13 @@
 package com.musicmaster.main.services;
 
 import com.musicmaster.main.clients.SpotifyMusicSource;
+import com.musicmaster.main.clients.TidalAuthClient;
+import com.musicmaster.main.clients.TidalMusicSource;
+import com.musicmaster.main.helpers.UriHelper;
 import com.musicmaster.main.models.UserConfig;
 import com.musicmaster.main.pojo.SpotifyProfileDetails;
 import com.musicmaster.main.pojo.SpotifyTokenResponse;
 import com.musicmaster.main.repositories.UserConfigRepository;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -26,9 +28,15 @@ public class AuthServiceTest {
     @Mock
     SpotifyMusicSource spotifyMusicSource;
 
+    @Mock
+    TidalAuthClient tidalAuthClient;
+
+    @Mock
+    UriHelper uriHelper;
+
     @BeforeEach
     public void init() {
-        authService = new AuthService(userConfigRepository, spotifyMusicSource);
+        authService = new AuthService(userConfigRepository, spotifyMusicSource, tidalAuthClient, uriHelper);
         SpotifyTokenResponse mockSpotifyResponse = new SpotifyTokenResponse();
         SpotifyProfileDetails mockProfileDetails = new SpotifyProfileDetails("test");
 
@@ -39,9 +47,8 @@ public class AuthServiceTest {
     }
 
     @Test
-    public void updateSpotifyAuthDetails_success() {
-        String status = authService.updateSpotifyAuthDetails("test");
+    public void loadSpotifyAuthToken_success() {
+        authService.loadSpotifyAuthToken("test");
         verify(userConfigRepository, times(2)).save(any());
-        Assertions.assertNotNull(status);
     }
 }

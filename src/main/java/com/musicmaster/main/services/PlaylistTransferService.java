@@ -4,6 +4,8 @@ import com.musicmaster.main.clients.SpotifyMusicSource;
 import com.musicmaster.main.clients.TidalMusicSource;
 import com.musicmaster.main.models.*;
 import com.musicmaster.main.pojo.SpotifySearchResponse;
+import com.musicmaster.main.pojo.TidalTrack;
+import com.musicmaster.main.pojo.TidalTrackAttributes;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -28,8 +30,9 @@ public class PlaylistTransferService {
         Playlist finalSpotifyPlaylist = new SpotifyPlaylist();
 
         //get songs from tidal
-        List<TidalSong> tidalSongs = tidalMusicSource.getPlaylistTracks(tidalPlaylistId);
-        List<Song> songsForSearch = convertSongs(tidalSongs);
+        List<String> trackIds = tidalMusicSource.getAllPlaylistsTrackIds(tidalPlaylistId);
+        List<TidalTrack> tidalTracks = tidalMusicSource.getTracks(trackIds);
+        List<Song> songsForSearch = convertTidalTracks(tidalTracks);
 
         //find songs in spotify
         List<SpotifySong> spotifySongList = findSpotifySongs(songsForSearch);
@@ -47,26 +50,50 @@ public class PlaylistTransferService {
 
         songs.forEach( song -> {
             SpotifySong spotifySong = new SpotifySong();
-            Album album = new Album();
-            album.setName(song.getAlbum().getName());
-            Artist artist = new Artist();
-            artist.setName(song.getArtist().getName());
-            spotifySong.setAlbum(album);
-            spotifySong.setArtist(artist);
             spotifySong.setName(song.getName());
+            spotifySong.setIsrc(song.getIsrc());
+
+            if (song.getAlbum() != null) {
+                Album album = new Album();
+                album.setName(song.getAlbum().getName());
+                spotifySong.setAlbum(album);
+            }
+
+            if (song.getArtist() != null) {
+                Artist artist = new Artist();
+                artist.setName(song.getArtist().getName());
+                spotifySong.setArtist(artist);
+            }
 
             SpotifySearchResponse searchresults = spotifyMusicSource.searchSong(spotifySong);
 
-            if(searchresults != null &&  searchresults.getTracks().getItems().size() > 0) {
+            if(searchresults != null
+                    && searchresults.getTracks() != null
+                    && searchresults.getTracks().getItems() != null
+                    && !searchresults.getTracks().getItems().isEmpty()) {
                 SpotifySong firstResult = searchresults.getTracks().getItems().get(0);
                 spotifySong.setId(firstResult.getId());
             }
 
-            if(spotifySong.getId() != null && spotifySong.getId() != "")
+            if(spotifySong.getId() != null && !spotifySong.getId().isEmpty())
                 spotifySongs.add(spotifySong);
         });
 
         return spotifySongs;
+    }
+
+    List<Song> convertTidalTracks(List<TidalTrack> tidalTracks) {
+        List<Song> songs = new ArrayList<>(tidalTracks.size());
+        tidalTracks.forEach(tidalTrack -> {
+            Song song = new Song();
+            TidalTrackAttributes attributes = tidalTrack.getAttributes();
+            if (attributes != null) {
+                song.setName(attributes.getTitle());
+                song.setIsrc(attributes.getIsrc());
+            }
+            songs.add(song);
+        });
+        return songs;
     }
 
     List<Song> convertSongs(List<TidalSong> tidalSongs) {

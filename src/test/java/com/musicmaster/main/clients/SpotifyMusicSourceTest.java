@@ -7,6 +7,7 @@ import com.musicmaster.main.repositories.UserConfigRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.HttpEntity;
@@ -24,6 +25,7 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(SpringExtension.class)
@@ -168,5 +170,40 @@ public class SpotifyMusicSourceTest {
         song.setName("testSong");
         SpotifySearchResponse searchResponse = spotifyMusicSource.searchSong(song);
         assertNotNull(searchResponse);
+    }
+
+    @Test
+    public void searchSong_withIsrc_usesIsrcQuery() {
+        when(restTemplate.getForObject(anyString(), eq(SpotifySearchResponse.class))).thenReturn(new SpotifySearchResponse());
+        SpotifySong song = new SpotifySong("teadsad");
+        song.setName("testSong");
+        song.setIsrc(" USRC17607839 ");
+        Artist artist = new Artist();
+        artist.setName("testArtist");
+        song.setArtist(artist);
+
+        spotifyMusicSource.searchSong(song);
+
+        ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(restTemplate).getForObject(urlCaptor.capture(), eq(SpotifySearchResponse.class));
+        assertTrue(urlCaptor.getValue().contains("q=isrc:USRC17607839"));
+        assertFalse(urlCaptor.getValue().contains("testSong"));
+        assertFalse(urlCaptor.getValue().contains("testArtist"));
+    }
+
+    @Test
+    public void searchSong_withoutIsrc_usesTitleAndArtistQuery() {
+        when(restTemplate.getForObject(anyString(), eq(SpotifySearchResponse.class))).thenReturn(new SpotifySearchResponse());
+        SpotifySong song = new SpotifySong("teadsad");
+        song.setName("testSong");
+        Artist artist = new Artist();
+        artist.setName("testArtist");
+        song.setArtist(artist);
+
+        spotifyMusicSource.searchSong(song);
+
+        ArgumentCaptor<String> urlCaptor = ArgumentCaptor.forClass(String.class);
+        verify(restTemplate).getForObject(urlCaptor.capture(), eq(SpotifySearchResponse.class));
+        assertTrue(urlCaptor.getValue().contains("q=testSong testArtist"));
     }
 }
